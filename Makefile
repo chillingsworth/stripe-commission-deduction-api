@@ -13,3 +13,6 @@ create-stack:
 
 update-stack:
 	@aws cloudformation update-stack --stack-name ${STACK_NAME} --template-body $(cloudformation-template);
+
+delete-stack:
+	@aws cloudformation delete-stack --stack-name ${STACK_NAME}
