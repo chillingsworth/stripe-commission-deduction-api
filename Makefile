@@ -21,15 +21,27 @@ set-aws-uname: set-env
 	@read -p "Enter AWS Username:" uname; \
 	echo AWS_ROLE_UNAME=$$uname >> .env;
 
-create-ec2-key-pair:
+install-requirements:
+	@sudo apt-get install jq
+
+create-ec2-key-pair: install-requirements
     ifeq (,$(wildcard ./*.pem))
 		@read -p "Enter PEM Key Name:" keyname; \
 		echo KEYPAIR_NAME=$$keyname >> .env; \
-		aws ec2 create-key-pair --key-name $$keyname > $$keyname.pem
+		aws ec2 create-key-pair --key-name $$keyname \
+		| jq -r ".KeyMaterial" > $$keyname.pem; \
+		chmod 400 $$keyname.pem
     endif
-	
-list-instances:
-	@aws ec2 describe-instances --filters "Name=tag:aws:cloudformation:stack-name, Values="${STACK_NAME}
+
+instances = aws ec2 describe-instances --query \
+	"Reservations[*].Instances[*].{PublicIP:PublicIpAddress,Type:InstanceType,Name:Tags[?Key=='Name']|[0].Value,Status:State.Name}" \
+	--filters "Name=tag:aws:cloudformation:stack-name, Values="${STACK_NAME} \
+	"Name=instance-state-name, Values=running"
+
+instance-ip = $(call instances) | jq '[.[][] | select(.PublicIP != null)] | .[].PublicIP'
+
+connect-ec2:
+	@ssh -i ${KEYPAIR_NAME}.pem ubuntu@$(shell $(call instance-ip))
 
 ifneq (,$(wildcard ./.env))
     include .env

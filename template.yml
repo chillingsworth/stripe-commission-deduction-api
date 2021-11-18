@@ -177,6 +177,22 @@ Resources:
         ToPort: 3306
       VpcId:
         !Ref VPC
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for EC2 Public Instances
+      SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: TCP
+        ToPort: 22
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 22
+        IpProtocol: TCP
+        ToPort: 22
+      VpcId:
+        !Ref VPC
 
   # Aurora DB instances spanning two subnets/azs
   DBSubnetGroup:
@@ -246,7 +262,7 @@ Resources:
               !Ref PublicSubnetA
             DeviceIndex: '0'
             GroupSet:
-            - !Ref VPCSecurityGroup
+            - !Ref EC2SecurityGroup
         Type: "AWS::EC2::Instance"
 
   EC2Instance2: 
@@ -255,7 +271,12 @@ Resources:
         ImageId: ami-04dd18caec1f19ec7
         InstanceType: t2.micro
         KeyName: !Ref KeyName
-        SecurityGroupIds: 
-          - !Ref VPCSecurityGroup
-        SubnetId: !Ref PublicSubnetB
+        NetworkInterfaces:
+        - AssociatePublicIpAddress: 'False'
+          DeleteOnTermination: 'True'
+          SubnetId:
+            !Ref PublicSubnetB
+          DeviceIndex: '0'
+          GroupSet:
+          - !Ref EC2SecurityGroup
       Type: "AWS::EC2::Instance"
