@@ -1,4 +1,38 @@
+Description: "Cloudformation template for deploying architecture for stripe commissions project" 
+
+Parameters:
+  CodeS3Key:
+    Type: String
+    Description: String of path to the code zip file in the s3 bucket
+    Default: lambda.zip
+  DatabaseName:
+    Type: String
+    Description: Name of up to 8 characters to identify your database
+    AllowedPattern: "\\w{1,8}"
+    Default: exDB
+  DBMasterUsername:
+    Type: String
+    Description: Master username for the DB cluster
+    Default: example
+  DBMasterUserPassword:
+    Type: String
+    Description: Master user's password for the DB cluster
+    Default: password
+  DBInstanceClass:
+    Type: String
+    Description: Database instance type
+    Default: db.t2.small
+  QSS3BucketName:
+    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
+    Default: aws-quickstart
+    Type: String
+  QSS3KeyPrefix:
+    AllowedPattern: ^[0-9a-zA-Z-/]*$
+    Default: quickstart-redhat-openshift/
+    Type: String
+
 Resources:
+
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -97,11 +131,12 @@ Resources:
         Value: Private
   PrivateRoute1:            # Private route table can access web via NAT (created below)
     Type: AWS::EC2::Route
+    DependsOn: NATGateway
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
       # Route traffic through the NAT Gateway:
-      NatGatewayId: NATGateway
+      NatGatewayId: !Ref NATGateway
 
   # Attach the public subnets to public route tables,
   # and attach the private subnets to private route tables:   
@@ -125,4 +160,91 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnetB
       RouteTableId: !Ref PrivateRouteTable
-  
+
+  VPCSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group for our VPC
+      SecurityGroupEgress: []
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 3306
+        IpProtocol: TCP
+        ToPort: 3306
+      VpcId:
+        !Ref VPC
+
+  # Aurora DB instances spanning two subnets/azs
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: AuroraPrivateSubnetGroup
+      SubnetIds:
+      - !Ref PrivateSubnetA
+      - !Ref PrivateSubnetB
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      DBSubnetGroupName:
+        !Ref DBSubnetGroup
+      DatabaseName:
+        !Ref DatabaseName
+      Engine: aurora-mysql
+      MasterUsername:
+        !Ref DBMasterUsername
+      MasterUserPassword:
+        !Ref DBMasterUserPassword
+      VpcSecurityGroupIds:
+      - !Ref VPCSecurityGroup
+  AuroraNode1:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AuroraCluster
+    Properties:
+      DBClusterIdentifier:
+        !Ref AuroraCluster
+      DBSubnetGroupName:
+        !Ref DBSubnetGroup
+      Engine: aurora-mysql
+      DBInstanceClass:
+        !Ref DBInstanceClass
+      AvailabilityZone:
+        Fn::GetAtt:
+        - PrivateSubnetA
+        - AvailabilityZone
+      PubliclyAccessible: false
+  AuroraNode2:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AuroraCluster
+    Properties:
+      DBClusterIdentifier:
+        !Ref AuroraCluster
+      DBSubnetGroupName:
+        !Ref DBSubnetGroup
+      Engine: aurora-mysql
+      DBInstanceClass:
+        !Ref DBInstanceClass
+      AvailabilityZone:
+        Fn::GetAtt:
+        - PrivateSubnetB
+        - AvailabilityZone
+      PubliclyAccessible: false
+    
+  EC2Instance1: 
+        Properties:
+          AvailabilityZone: !Select [ 0, !GetAZs ]
+          ImageId: ami-04dd18caec1f19ec7
+          InstanceType: t2.micro
+          SecurityGroupIds: 
+            - !Ref VPCSecurityGroup
+          SubnetId: !Ref PublicSubnetA
+        Type: "AWS::EC2::Instance"
+
+  EC2Instance2: 
+      Properties:
+        AvailabilityZone: !Select [ 1, !GetAZs ]
+        ImageId: ami-04dd18caec1f19ec7
+        InstanceType: t2.micro
+        SecurityGroupIds: 
+          - !Ref VPCSecurityGroup
+        SubnetId: !Ref PublicSubnetB
+      Type: "AWS::EC2::Instance"

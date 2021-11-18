@@ -1,9 +1,4 @@
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
-
-cloudformation-template=file://stack-template.yml
+cloudformation-template=file://template.yml
 
 create-stack:
 	@read -p "Enter New AWS Stack Name:" stack; \
@@ -16,3 +11,22 @@ update-stack:
 
 delete-stack:
 	@aws cloudformation delete-stack --stack-name ${STACK_NAME}
+
+zip-endpoint-lambda:
+	zip -FSr ./endpoint-lambda/endpoint-lambda.zip ./endpoint-lambda -x ./endpoint-lambda/.\*
+
+set-aws-uname: set-env
+	@read -p "Enter AWS Username:" uname; \
+	echo AWS_ROLE_UNAME=$$uname >> .env;
+
+create-ec2-key-pair:
+    ifeq (,$(wildcard ./*.pem))
+		@read -p "Enter PEM Key Name:" keyname; \
+		echo KEYPAIR_NAME=$$keyname >> .env; \
+		aws ec2 create-key-pair --key-name $$keyname > $$keyname.pem
+    endif
+	
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
