@@ -30,6 +30,10 @@ Parameters:
     AllowedPattern: ^[0-9a-zA-Z-/]*$
     Default: quickstart-redhat-openshift/
     Type: String
+  KeyName:
+    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
+    Type: "String"
+
 
 Resources:
 
@@ -234,9 +238,15 @@ Resources:
           AvailabilityZone: !Select [ 0, !GetAZs ]
           ImageId: ami-04dd18caec1f19ec7
           InstanceType: t2.micro
-          SecurityGroupIds: 
+          KeyName: !Ref KeyName
+          NetworkInterfaces:
+          - AssociatePublicIpAddress: 'True'
+            DeleteOnTermination: 'True'
+            SubnetId:
+              !Ref PublicSubnetA
+            DeviceIndex: '0'
+            GroupSet:
             - !Ref VPCSecurityGroup
-          SubnetId: !Ref PublicSubnetA
         Type: "AWS::EC2::Instance"
 
   EC2Instance2: 
@@ -244,6 +254,7 @@ Resources:
         AvailabilityZone: !Select [ 1, !GetAZs ]
         ImageId: ami-04dd18caec1f19ec7
         InstanceType: t2.micro
+        KeyName: !Ref KeyName
         SecurityGroupIds: 
           - !Ref VPCSecurityGroup
         SubnetId: !Ref PublicSubnetB
