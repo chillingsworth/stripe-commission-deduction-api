@@ -65,6 +65,10 @@ instance-ip = $(call instances) | jq '[.[][] | select(.PublicIP != null)] | .[].
 connect-ec2:
 	@ssh -i ${KEYPAIR_NAME}.pem ubuntu@$(shell $(call instance-ip))
 
+connect-db:
+	@mysql --host=stripe-stack-auroracluster-l7la0owbkiok.cluster-c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
+	--user=example --password=password exDB
+
 ifneq (,$(wildcard ./.env))
     include .env
     export
