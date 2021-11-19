@@ -186,11 +186,20 @@ Resources:
         FromPort: 22
         IpProtocol: TCP
         ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: -1
+        IpProtocol: icmp
+        ToPort: -1
+
       SecurityGroupIngress:
       - CidrIp: 0.0.0.0/0
         FromPort: 22
         IpProtocol: TCP
         ToPort: 22
+      - CidrIp: 0.0.0.0/0
+        FromPort: -1
+        IpProtocol: icmp
+        ToPort: -1
       VpcId:
         !Ref VPC
 
@@ -275,7 +284,7 @@ Resources:
         - AssociatePublicIpAddress: 'False'
           DeleteOnTermination: 'True'
           SubnetId:
-            !Ref PublicSubnetB
+            !Ref PrivateSubnetB
           DeviceIndex: '0'
           GroupSet:
           - !Ref EC2SecurityGroup
