@@ -259,33 +259,43 @@ Resources:
       PubliclyAccessible: false
     
   EC2Instance1: 
-        Properties:
-          AvailabilityZone: !Select [ 0, !GetAZs ]
-          ImageId: ami-04dd18caec1f19ec7
-          InstanceType: t2.micro
-          KeyName: !Ref KeyName
-          NetworkInterfaces:
-          - AssociatePublicIpAddress: 'True'
-            DeleteOnTermination: 'True'
-            SubnetId:
-              !Ref PublicSubnetA
-            DeviceIndex: '0'
-            GroupSet:
-            - !Ref EC2SecurityGroup
-        Type: "AWS::EC2::Instance"
+    Properties:
+      AvailabilityZone: !Select [ 0, !GetAZs ]
+      ImageId: ami-04dd18caec1f19ec7
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: 'True'
+        DeleteOnTermination: 'True'
+        SubnetId:
+          !Ref PublicSubnetA
+        DeviceIndex: '0'
+        GroupSet:
+        - !Ref EC2SecurityGroup
+    Type: "AWS::EC2::Instance"
 
   EC2Instance2: 
-      Properties:
-        AvailabilityZone: !Select [ 1, !GetAZs ]
-        ImageId: ami-04dd18caec1f19ec7
-        InstanceType: t2.micro
-        KeyName: !Ref KeyName
-        NetworkInterfaces:
-        - AssociatePublicIpAddress: 'False'
-          DeleteOnTermination: 'True'
-          SubnetId:
-            !Ref PrivateSubnetB
-          DeviceIndex: '0'
-          GroupSet:
-          - !Ref EC2SecurityGroup
-      Type: "AWS::EC2::Instance"
+    Properties:
+      AvailabilityZone: !Select [ 1, !GetAZs ]
+      ImageId: ami-04dd18caec1f19ec7
+      InstanceType: t2.micro
+      KeyName: !Ref KeyName
+      SecurityGroupIds: 
+        - !Ref EC2SecurityGroup
+      SubnetId: !Ref PublicSubnetB
+    Type: "AWS::EC2::Instance"
+  # EC2Instance2: 
+  #     Properties:
+  #       AvailabilityZone: !Select [ 1, !GetAZs ]
+  #       ImageId: ami-04dd18caec1f19ec7
+  #       InstanceType: t2.micro
+  #       KeyName: !Ref KeyName
+  #       NetworkInterfaces:
+  #       - AssociatePublicIpAddress: 'False'
+  #         DeleteOnTermination: 'True'
+  #         SubnetId:
+  #           !Ref PrivateSubnetB
+  #         DeviceIndex: '0'
+  #         GroupSet:
+  #         - !Ref EC2SecurityGroup
+  #     Type: "AWS::EC2::Instance"
