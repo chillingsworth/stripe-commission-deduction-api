@@ -145,16 +145,16 @@ Resources:
   # Attach the public subnets to public route tables,
   # and attach the private subnets to private route tables:   
 
-  # PublicSubnetARouteTableAssociation:
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-  #   Properties:
-  #     SubnetId: !Ref PublicSubnetA
-  #     RouteTableId: !Ref PublicRouteTable
-  # PublicSubnetBRouteTableAssociation:
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-  #   Properties:
-  #     SubnetId: !Ref PublicSubnetB
-  #     RouteTableId: !Ref PublicRouteTable
+  PublicSubnetARouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+  PublicSubnetBRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
 
   # PrivateSubnetARouteTableAssociation:
   #   Type: AWS::EC2::SubnetRouteTableAssociation

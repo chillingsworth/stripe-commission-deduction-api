@@ -31,13 +31,16 @@ create-stack: load-env
         aws cloudformation create-stack --stack-name \
         $$stack --template-body $(cloudformation-template) \
 		--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}; \
-        echo STACK_NAME=$$stack >> .env;
+        echo STACK_NAME=$$stack >> .env; \
+		aws cloudformation wait stack-create-complete --stack-name $$stack;
+
     endif
 
 update-stack:
 	@aws cloudformation update-stack --stack-name ${STACK_NAME} \
 	--template-body $(cloudformation-template) \
-	--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}
+	--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}; \
+	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 delete-stack:
 	@aws cloudformation delete-stack --stack-name ${STACK_NAME}
