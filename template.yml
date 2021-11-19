@@ -112,69 +112,83 @@ Resources:
       GatewayId: !Ref InternetGateway  
   
   # A NAT Gateway:
-  NATGateway:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt ElasticIPAddress.AllocationId
-      SubnetId: !Ref PublicSubnetA
-      Tags:
-      - Key: Name
-        Value: !Sub NAT-${AWS::StackName}
-  ElasticIPAddress:
-    Type: AWS::EC2::EIP
-    Properties:
-      Domain: VPC
+  # NATGateway:
+  #   Type: AWS::EC2::NatGateway
+  #   Properties:
+  #     AllocationId: !GetAtt ElasticIPAddress.AllocationId
+  #     SubnetId: !Ref PublicSubnetA
+  #     Tags:
+  #     - Key: Name
+  #       Value: !Sub NAT-${AWS::StackName}
+  # ElasticIPAddress:
+  #   Type: AWS::EC2::EIP
+  #   Properties:
+  #     Domain: VPC
 
-  # Here is a private route table:
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref VPC
-      Tags:
-      - Key: Name
-        Value: Private
-  PrivateRoute1:            # Private route table can access web via NAT (created below)
-    Type: AWS::EC2::Route
-    DependsOn: NATGateway
-    Properties:
-      RouteTableId: !Ref PrivateRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      # Route traffic through the NAT Gateway:
-      NatGatewayId: !Ref NATGateway
+  # # Here is a private route table:
+  # PrivateRouteTable:
+  #   Type: AWS::EC2::RouteTable
+  #   Properties:
+  #     VpcId: !Ref VPC
+  #     Tags:
+  #     - Key: Name
+  #       Value: Private
+  # PrivateRoute1:            # Private route table can access web via NAT (created below)
+  #   Type: AWS::EC2::Route
+  #   DependsOn: NATGateway
+  #   Properties:
+  #     RouteTableId: !Ref PrivateRouteTable
+  #     DestinationCidrBlock: 0.0.0.0/0
+  #     # Route traffic through the NAT Gateway:
+  #     NatGatewayId: !Ref NATGateway
 
   # Attach the public subnets to public route tables,
   # and attach the private subnets to private route tables:   
-  PublicSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnetA
-      RouteTableId: !Ref PublicRouteTable
-  PublicSubnetBRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnetB
-      RouteTableId: !Ref PublicRouteTable
-  PrivateSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnetA
-      RouteTableId: !Ref PrivateRouteTable
-  PrivateSubnetBRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnetB
-      RouteTableId: !Ref PrivateRouteTable
+
+  # PublicSubnetARouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PublicSubnetA
+  #     RouteTableId: !Ref PublicRouteTable
+  # PublicSubnetBRouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PublicSubnetB
+  #     RouteTableId: !Ref PublicRouteTable
+
+  # PrivateSubnetARouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PrivateSubnetA
+  #     RouteTableId: !Ref PrivateRouteTable
+  # PrivateSubnetBRouteTableAssociation:
+  #   Type: AWS::EC2::SubnetRouteTableAssociation
+  #   Properties:
+  #     SubnetId: !Ref PrivateSubnetB
+  #     RouteTableId: !Ref PrivateRouteTable
 
   VPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group for our VPC
-      SecurityGroupEgress: []
+      SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        FromPort: 3306
+        IpProtocol: TCP
+        ToPort: 3306
+      - CidrIp: 0.0.0.0/0
+        FromPort: -1
+        IpProtocol: icmp
+        ToPort: -1
       SecurityGroupIngress:
       - CidrIp: 0.0.0.0/0
         FromPort: 3306
         IpProtocol: TCP
         ToPort: 3306
+      - CidrIp: 0.0.0.0/0
+        FromPort: -1
+        IpProtocol: icmp
+        ToPort: -1
       VpcId:
         !Ref VPC
   EC2SecurityGroup:
@@ -207,10 +221,11 @@ Resources:
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: AuroraPrivateSubnetGroup
+      DBSubnetGroupDescription: AuroraSubnetGroup
       SubnetIds:
       - !Ref PrivateSubnetA
       - !Ref PrivateSubnetB
+      - !Ref PublicSubnetB
   AuroraCluster:
     Type: AWS::RDS::DBCluster
     Properties:
@@ -257,6 +272,22 @@ Resources:
         - PrivateSubnetB
         - AvailabilityZone
       PubliclyAccessible: false
+  AuroraNode3:
+    Type: AWS::RDS::DBInstance
+    DependsOn: AuroraCluster
+    Properties:
+      DBClusterIdentifier:
+        !Ref AuroraCluster
+      DBSubnetGroupName:
+        !Ref DBSubnetGroup
+      Engine: aurora-mysql
+      DBInstanceClass:
+        !Ref DBInstanceClass
+      AvailabilityZone:
+        Fn::GetAtt:
+        - PublicSubnetB
+        - AvailabilityZone
+      PubliclyAccessible: false
     
   EC2Instance1: 
     Properties:
@@ -282,5 +313,5 @@ Resources:
       KeyName: !Ref KeyName
       SecurityGroupIds: 
         - !Ref EC2SecurityGroup
-      SubnetId: !Ref PublicSubnetB
+      SubnetId: !Ref PrivateSubnetB
     Type: "AWS::EC2::Instance"
