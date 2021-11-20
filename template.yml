@@ -22,6 +22,19 @@ Parameters:
     Type: String
     Description: Database instance type
     Default: db.t2.small
+  DBAllocatedStorage:
+    Default: '5'
+    Description: The size of the database (Gb)
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
+    ConstraintDescription: must be between 5 and 1024Gb.
+  MultiAZ:
+    Description: Multi-AZ master database
+    Type: String
+    Default: 'false'
+    AllowedValues: ['true', 'false']
+    ConstraintDescription: must be true or false.
   QSS3BucketName:
     AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
     Default: aws-quickstart
@@ -217,77 +230,6 @@ Resources:
       VpcId:
         !Ref VPC
 
-  # Aurora DB instances spanning two subnets/azs
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: AuroraSubnetGroup
-      SubnetIds:
-      - !Ref PublicSubnetA
-      - !Ref PublicSubnetB
-  AuroraCluster:
-    Type: AWS::RDS::DBCluster
-    Properties:
-      DBSubnetGroupName:
-        !Ref DBSubnetGroup
-      DatabaseName:
-        !Ref DatabaseName
-      Engine: aurora-mysql
-      MasterUsername:
-        !Ref DBMasterUsername
-      MasterUserPassword:
-        !Ref DBMasterUserPassword
-      VpcSecurityGroupIds:
-      - !Ref VPCSecurityGroup
-  AuroraNode1:
-    Type: AWS::RDS::DBInstance
-    DependsOn: AuroraCluster
-    Properties:
-      DBClusterIdentifier:
-        !Ref AuroraCluster
-      DBSubnetGroupName:
-        !Ref DBSubnetGroup
-      Engine: aurora-mysql
-      DBInstanceClass:
-        !Ref DBInstanceClass
-      AvailabilityZone:
-        Fn::GetAtt:
-        - PublicSubnetA
-        - AvailabilityZone
-      PubliclyAccessible: true
-  AuroraNode2:
-    Type: AWS::RDS::DBInstance
-    DependsOn: AuroraCluster
-    Properties:
-      DBClusterIdentifier:
-        !Ref AuroraCluster
-      DBSubnetGroupName:
-        !Ref DBSubnetGroup
-      Engine: aurora-mysql
-      DBInstanceClass:
-        !Ref DBInstanceClass
-      AvailabilityZone:
-        Fn::GetAtt:
-        - PublicSubnetA
-        - AvailabilityZone
-      PubliclyAccessible: true
-  AuroraNode3:
-    Type: AWS::RDS::DBInstance
-    DependsOn: AuroraCluster
-    Properties:
-      DBClusterIdentifier:
-        !Ref AuroraCluster
-      DBSubnetGroupName:
-        !Ref DBSubnetGroup
-      Engine: aurora-mysql
-      DBInstanceClass:
-        !Ref DBInstanceClass
-      AvailabilityZone:
-        Fn::GetAtt:
-        - PublicSubnetB
-        - AvailabilityZone
-      PubliclyAccessible: true
-    
   EC2Instance1: 
     Properties:
       AvailabilityZone: !Select [ 0, !GetAZs ]
@@ -314,3 +256,26 @@ Resources:
         - !Ref EC2SecurityGroup
       SubnetId: !Ref PrivateSubnetB
     Type: "AWS::EC2::Instance"
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: AuroraSubnetGroup
+      SubnetIds:
+      - !Ref PublicSubnetA
+      - !Ref PublicSubnetB
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: !Ref DatabaseName
+      AllocatedStorage: !Ref DBAllocatedStorage
+      DBInstanceClass: !Ref DBInstanceClass
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Engine: MySQL
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterUserPassword
+      PubliclyAccessible: true
+      # MultiAZ: !Ref 'MultiAZ'
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot

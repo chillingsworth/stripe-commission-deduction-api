@@ -31,9 +31,8 @@ create-stack: load-env
         aws cloudformation create-stack --stack-name \
         $$stack --template-body $(cloudformation-template) \
 		--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}; \
-        echo STACK_NAME=$$stack >> .env; \
+        echo STACK_NAME=$$stack  >> .env; \
 		aws cloudformation wait stack-create-complete --stack-name $$stack;
-
     endif
 
 update-stack:
@@ -66,7 +65,7 @@ connect-ec2:
 	@ssh -i ${KEYPAIR_NAME}.pem ubuntu@$(shell $(call instance-ip))
 
 connect-db:
-	@mysql --host=stripe-stack-auroracluster-l7la0owbkiok.cluster-c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
+	@mysql --host=sdll1o4tn78pla.c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
 	--user=example --password=password exDB
 
 ifneq (,$(wildcard ./.env))
