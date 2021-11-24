@@ -272,6 +272,8 @@ Resources:
       AllocatedStorage: !Ref DBAllocatedStorage
       DBInstanceClass: !Ref DBInstanceClass
       DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups: 
+      - !Ref VPCSecurityGroup
       Engine: MySQL
       MasterUsername: !Ref DBMasterUsername
       MasterUserPassword: !Ref DBMasterUserPassword
@@ -279,3 +281,32 @@ Resources:
       # MultiAZ: !Ref 'MultiAZ'
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
+  
+  LambdaZipsBucket:
+    Type: AWS::S3::Bucket
+
+  MyFunctionRole:
+  Type: AWS::IAM::Role
+  Properties:
+    AssumeRolePolicyDocument:
+      Version: '2012-10-17'
+      Statement:
+      - Effect: Allow
+        Principal:
+          Service: lambda.amazonaws.com
+        Action: sts:AssumeRole
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service role/AWSLambdaBasicExecutionRole
+
+  MyFunction:
+    DependsOn: CopyZips
+    Type: AWS::Lambda::Function
+    Properties:
+      Description: Example
+      Handler: index.handler
+      Runtime: nodejs12.x
+      Role: !GetAtt 'MyFunctionRole.Arn'
+      Timeout: 300
+      Code:
+        S3Bucket: !Ref 'LambdaZipsBucket'
+        S3Key: './endpoint-lambda/lambda.zip'

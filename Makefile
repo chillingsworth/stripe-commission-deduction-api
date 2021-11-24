@@ -65,8 +65,13 @@ connect-ec2:
 	@ssh -i ${KEYPAIR_NAME}.pem ubuntu@$(shell $(call instance-ip))
 
 connect-db:
-	@mysql --host=sdll1o4tn78pla.c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
+	@mysql --host=sd1m6q6oe1xmmqb.c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
 	--user=example --password=password exDB
+
+get-db:
+	@aws rds describe-db-instances \
+    --filters "Name=engine,Values=mysql" \
+	--query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]"
 
 ifneq (,$(wildcard ./.env))
     include .env
