@@ -30,7 +30,7 @@ create-stack: load-env
 	    @read -p "Enter New AWS Stack Name:" stack; \
         aws cloudformation create-stack --stack-name \
         $$stack --template-body $(cloudformation-template) \
-		--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME} \
+		--parameters ParameterValue=${KEYPAIR_NAME} \
 		--capabilities CAPABILITY_IAM; \
         echo STACK_NAME=$$stack  >> .env; \
 		aws cloudformation wait stack-create-complete --stack-name $$stack;
@@ -71,10 +71,18 @@ connect-db:
 	@mysql --host=sd1m6q6oe1xmmqb.c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
 	--user=example --password=password exDB
 
-get-db:
-	@aws rds describe-db-instances \
-    --filters "Name=engine,Values=mysql" \
-	--query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]"
+get-db-url:
+	@echo RDS_ENDPOINT=$$(aws rds describe-db-instances \
+    --filters "Name=engine,Values=mysql" "Name=db-instance-id,Values=${RDS_NAME}" \
+    --query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]" \
+    | jq -r '.[][1]';) >> .env
+
+configure-db:
+	@echo ${DB_USERNAME}; \
+    echo ${DB_PASSWORD}; \
+    echo ${RDS_ENDPOINT}; \
+    echo ${DB_NAME};
+	mysql -u ${DB_USERNAME} -p${DB_PASSWORD} -h ${RDS_ENDPOINT} ${DB_NAME} < "./configure-db.sql"
 
 package-deps:
 	@mkdir -p ./build/aws-layer/python/lib/python3.9/site-packages; \

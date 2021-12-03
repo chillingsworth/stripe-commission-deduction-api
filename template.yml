@@ -1,10 +1,6 @@
 Description: "Cloudformation template for deploying architecture for stripe commissions project" 
 
 Parameters:
-  CodeS3Key:
-    Type: String
-    Description: String of path to the code zip file in the s3 bucket
-    Default: lambda.zip
   DatabaseName:
     Type: String
     Description: Name of up to 8 characters to identify your database
@@ -29,27 +25,8 @@ Parameters:
     MinValue: '5'
     MaxValue: '1024'
     ConstraintDescription: must be between 5 and 1024Gb.
-  MultiAZ:
-    Description: Multi-AZ master database
-    Type: String
-    Default: 'false'
-    AllowedValues: ['true', 'false']
-    ConstraintDescription: must be true or false.
-  QSS3BucketName:
-    AllowedPattern: ^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$
-    Default: aws-quickstart
-    Type: String
-  QSS3KeyPrefix:
-    AllowedPattern: ^[0-9a-zA-Z-/]*$
-    Default: quickstart-redhat-openshift/
-    Type: String
-  KeyName:
-    Description: "Name of an existing EC2 KeyPair to enable SSH access to the instance"
-    Type: "String"
-
 
 Resources:
-
   VPC:
     Type: AWS::EC2::VPC
     Properties:
@@ -64,6 +41,7 @@ Resources:
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     DependsOn: VPC
+
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
     # Notice how you can't attach an IGW to a VPC unless both are created:
@@ -89,24 +67,6 @@ Resources:
       Tags:
       - Key: Name
         Value: !Sub ${AWS::StackName}-Public-B
-  PrivateSubnetA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.1.50.0/24
-      AvailabilityZone: !Select [ 0, !GetAZs ]    # Get the first AZ in the list 
-      Tags:
-      - Key: Name
-        Value: !Sub ${AWS::StackName}-Private-A
-  PrivateSubnetB:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: 10.1.60.0/24
-      AvailabilityZone: !Select [ 1, !GetAZs ]    # Get the second AZ in the list 
-      Tags:
-      - Key: Name
-        Value: !Sub ${AWS::StackName}-Private-B
 
   # Some route tables for our subnets:
   PublicRouteTable:
@@ -122,41 +82,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PublicRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway  
-  
-  # A NAT Gateway:
-  # NATGateway:
-  #   Type: AWS::EC2::NatGateway
-  #   Properties:
-  #     AllocationId: !GetAtt ElasticIPAddress.AllocationId
-  #     SubnetId: !Ref PublicSubnetA
-  #     Tags:
-  #     - Key: Name
-  #       Value: !Sub NAT-${AWS::StackName}
-  # ElasticIPAddress:
-  #   Type: AWS::EC2::EIP
-  #   Properties:
-  #     Domain: VPC
-
-  # # Here is a private route table:
-  # PrivateRouteTable:
-  #   Type: AWS::EC2::RouteTable
-  #   Properties:
-  #     VpcId: !Ref VPC
-  #     Tags:
-  #     - Key: Name
-  #       Value: Private
-  # PrivateRoute1:            # Private route table can access web via NAT (created below)
-  #   Type: AWS::EC2::Route
-  #   DependsOn: NATGateway
-  #   Properties:
-  #     RouteTableId: !Ref PrivateRouteTable
-  #     DestinationCidrBlock: 0.0.0.0/0
-  #     # Route traffic through the NAT Gateway:
-  #     NatGatewayId: !Ref NATGateway
-
-  # Attach the public subnets to public route tables,
-  # and attach the private subnets to private route tables:   
+      GatewayId: !Ref InternetGateway 
 
   PublicSubnetARouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -169,19 +95,11 @@ Resources:
       SubnetId: !Ref PublicSubnetB
       RouteTableId: !Ref PublicRouteTable
 
-  # PrivateSubnetARouteTableAssociation:
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-  #   Properties:
-  #     SubnetId: !Ref PrivateSubnetA
-  #     RouteTableId: !Ref PrivateRouteTable
-  # PrivateSubnetBRouteTableAssociation:
-  #   Type: AWS::EC2::SubnetRouteTableAssociation
-  #   Properties:
-  #     SubnetId: !Ref PrivateSubnetB
-  #     RouteTableId: !Ref PrivateRouteTable
-
   VPCSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    DependsOn: 
+      - PublicSubnetA
+      - PublicSubnetB
     Properties:
       GroupDescription: Security Group for our VPC
       SecurityGroupEgress:
@@ -204,63 +122,11 @@ Resources:
         ToPort: -1
       VpcId:
         !Ref VPC
-  EC2SecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security Group for EC2 Public Instances
-      SecurityGroupEgress:
-      - CidrIp: 0.0.0.0/0
-        FromPort: 22
-        IpProtocol: TCP
-        ToPort: 22
-      - CidrIp: 0.0.0.0/0
-        FromPort: -1
-        IpProtocol: -1
-        ToPort: -1
-
-      SecurityGroupIngress:
-      - CidrIp: 0.0.0.0/0
-        FromPort: 22
-        IpProtocol: TCP
-        ToPort: 22
-      - CidrIp: 0.0.0.0/0
-        FromPort: -1
-        IpProtocol: -1
-        ToPort: -1
-      VpcId:
-        !Ref VPC
-
-  EC2Instance1: 
-    Properties:
-      AvailabilityZone: !Select [ 0, !GetAZs ]
-      ImageId: ami-04dd18caec1f19ec7
-      InstanceType: t2.micro
-      KeyName: !Ref KeyName
-      NetworkInterfaces:
-      - AssociatePublicIpAddress: 'True'
-        DeleteOnTermination: 'True'
-        SubnetId:
-          !Ref PublicSubnetA
-        DeviceIndex: '0'
-        GroupSet:
-        - !Ref EC2SecurityGroup
-    Type: "AWS::EC2::Instance"
-
-  EC2Instance2: 
-    Properties:
-      AvailabilityZone: !Select [ 1, !GetAZs ]
-      ImageId: ami-04dd18caec1f19ec7
-      InstanceType: t2.micro
-      KeyName: !Ref KeyName
-      SecurityGroupIds: 
-        - !Ref EC2SecurityGroup
-      SubnetId: !Ref PrivateSubnetB
-    Type: "AWS::EC2::Instance"
 
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
-      DBSubnetGroupDescription: AuroraSubnetGroup
+      DBSubnetGroupDescription: DatabaseSubnetGroup
       SubnetIds:
       - !Ref PublicSubnetA
       - !Ref PublicSubnetB
@@ -281,49 +147,3 @@ Resources:
       # MultiAZ: !Ref 'MultiAZ'
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
-
-  Resources:
-    HelloWorld:
-      Type: AWS::Lambda::Function
-      Properties:
-        FunctionName: hello-world
-        Handler: index.handler
-        Role:
-          Fn::GetAtt:
-          - HelloWorldLambdaRole
-          - Arn
-        Code:
-          S3Bucket: cm-lambda-code-deploy
-          S3Key: hello-world.zip
-        Runtime: nodejs12.x
-  
-  # LambdaZipsBucket:
-  #   Type: AWS::S3::Bucket
-
-  # MyFunctionRole:
-  #   Type: AWS::IAM::Role
-  #   Properties:
-  #     AssumeRolePolicyDocument:
-  #       Version: '2012-10-17'
-  #       Statement:
-  #       - Effect: Allow
-  #         Principal:
-  #           Service: lambda.amazonaws.com
-  #         Action: sts:AssumeRole
-  #     ManagedPolicyArns:
-  #     - arn:aws:iam::aws:policy/AWSLambdaExecute
-  #     - arn:aws:iam::aws:policy/AmazonS3FullAccess
-  #     - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
-  #     - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
-
-  # MyFunction:
-  #   Type: AWS::Lambda::Function
-  #   Properties:
-  #     Description: Example
-  #     Handler: index.handler
-  #     Runtime: nodejs12.x
-  #     Role: !GetAtt 'MyFunctionRole.Arn'
-  #     Timeout: 300
-  #     Code:
-  #       S3Bucket: !Ref LambdaZipsBucket
-  #       S3Key: !Ref CodeS3Key
