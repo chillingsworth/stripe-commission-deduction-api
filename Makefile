@@ -39,7 +39,6 @@ create-stack: load-env
 update-stack:
 	@aws cloudformation update-stack --stack-name ${STACK_NAME} \
 	--template-body $(cloudformation-template) \
-	--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME} \
 	--capabilities CAPABILITY_IAM; \
 	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
@@ -77,12 +76,15 @@ get-db-url:
     --query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]" \
     | jq -r '.[][1]';) >> .env
 
-configure-db:
+configure-db: get-db-url
 	@echo ${DB_USERNAME}; \
     echo ${DB_PASSWORD}; \
     echo ${RDS_ENDPOINT}; \
     echo ${DB_NAME};
 	mysql -u ${DB_USERNAME} -p${DB_PASSWORD} -h ${RDS_ENDPOINT} ${DB_NAME} < "./configure-db.sql"
+
+create-code-bucket:
+	@aws s3api create-bucket --bucket ${BUCKET_NAME} --region us-east-1
 
 package-deps:
 	@mkdir -p ./build/aws-layer/python/lib/python3.9/site-packages; \
@@ -96,6 +98,11 @@ package-deps:
     --description "My Python layer" \
     --zip-file fileb://lambda-layer.zip \
     --compatible-runtimes python3.9;
+
+package-lambda:
+	@cd ./lambda/hook; \
+	zip -r9 lambda-hook.zip .; \
+	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME}/
 
 ifneq (,$(wildcard ./.env))
     include .env

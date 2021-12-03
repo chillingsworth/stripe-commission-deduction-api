@@ -21,3 +21,6 @@ ADD CONSTRAINT `customer foreign key`
   REFERENCES `exDB`.`customers` (`idcustomers`)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION;
+
+INSERT INTO `exDB`.`customers` (`name`, `address`, `stripe_account_id`) VALUES ('joes java', '111 silverstream road', 'acct_1K1ZebPw7IujTWEe');
+
