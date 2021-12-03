@@ -1,3 +1,5 @@
 .env
 scratch.txt
 *.pem
+build
+*.zip

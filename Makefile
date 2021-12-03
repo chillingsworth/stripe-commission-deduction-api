@@ -30,7 +30,8 @@ create-stack: load-env
 	    @read -p "Enter New AWS Stack Name:" stack; \
         aws cloudformation create-stack --stack-name \
         $$stack --template-body $(cloudformation-template) \
-		--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}; \
+		--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME} \
+		--capabilities CAPABILITY_IAM; \
         echo STACK_NAME=$$stack  >> .env; \
 		aws cloudformation wait stack-create-complete --stack-name $$stack;
     endif
@@ -38,14 +39,16 @@ create-stack: load-env
 update-stack:
 	@aws cloudformation update-stack --stack-name ${STACK_NAME} \
 	--template-body $(cloudformation-template) \
-	--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME}; \
+	--parameters ParameterKey="KeyName",ParameterValue=${KEYPAIR_NAME} \
+	--capabilities CAPABILITY_IAM; \
 	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 delete-stack:
 	@aws cloudformation delete-stack --stack-name ${STACK_NAME}
 
-zip-endpoint-lambda:
-	zip -FSr ./endpoint-lambda/endpoint-lambda.zip ./endpoint-lambda -x ./endpoint-lambda/.\*
+zip-lambda:
+	@rm -r ./endpoint-lambda/*.zip; \
+	zip -FSr ./endpoint-lambda/index.zip ./endpoint-lambda/index.js;
 
 set-aws-uname: set-env
 	@read -p "Enter AWS Username:" uname; \
@@ -72,6 +75,19 @@ get-db:
 	@aws rds describe-db-instances \
     --filters "Name=engine,Values=mysql" \
 	--query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]"
+
+package-deps:
+	@mkdir -p ./build/aws-layer/python/lib/python3.9/site-packages; \
+	cp requirements.txt ./build/; \
+    cd ./build; \
+    pip3 install -r requirements.txt --target aws-layer/python/lib/python3.9/site-packages; \
+    cd ./aws-layer; \
+    zip -r9 lambda-layer.zip .; \
+	aws lambda publish-layer-version \
+    --layer-name Data-Preprocessing \
+    --description "My Python layer" \
+    --zip-file fileb://lambda-layer.zip \
+    --compatible-runtimes python3.9;
 
 ifneq (,$(wildcard ./.env))
     include .env

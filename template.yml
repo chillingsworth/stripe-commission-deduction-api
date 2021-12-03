@@ -281,32 +281,49 @@ Resources:
       # MultiAZ: !Ref 'MultiAZ'
     DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
+
+  Resources:
+    HelloWorld:
+      Type: AWS::Lambda::Function
+      Properties:
+        FunctionName: hello-world
+        Handler: index.handler
+        Role:
+          Fn::GetAtt:
+          - HelloWorldLambdaRole
+          - Arn
+        Code:
+          S3Bucket: cm-lambda-code-deploy
+          S3Key: hello-world.zip
+        Runtime: nodejs12.x
   
-  LambdaZipsBucket:
-    Type: AWS::S3::Bucket
+  # LambdaZipsBucket:
+  #   Type: AWS::S3::Bucket
 
-  MyFunctionRole:
-  Type: AWS::IAM::Role
-  Properties:
-    AssumeRolePolicyDocument:
-      Version: '2012-10-17'
-      Statement:
-      - Effect: Allow
-        Principal:
-          Service: lambda.amazonaws.com
-        Action: sts:AssumeRole
-      ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service role/AWSLambdaBasicExecutionRole
+  # MyFunctionRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     AssumeRolePolicyDocument:
+  #       Version: '2012-10-17'
+  #       Statement:
+  #       - Effect: Allow
+  #         Principal:
+  #           Service: lambda.amazonaws.com
+  #         Action: sts:AssumeRole
+  #     ManagedPolicyArns:
+  #     - arn:aws:iam::aws:policy/AWSLambdaExecute
+  #     - arn:aws:iam::aws:policy/AmazonS3FullAccess
+  #     - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+  #     - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
 
-  MyFunction:
-    DependsOn: CopyZips
-    Type: AWS::Lambda::Function
-    Properties:
-      Description: Example
-      Handler: index.handler
-      Runtime: nodejs12.x
-      Role: !GetAtt 'MyFunctionRole.Arn'
-      Timeout: 300
-      Code:
-        S3Bucket: !Ref 'LambdaZipsBucket'
-        S3Key: './endpoint-lambda/lambda.zip'
+  # MyFunction:
+  #   Type: AWS::Lambda::Function
+  #   Properties:
+  #     Description: Example
+  #     Handler: index.handler
+  #     Runtime: nodejs12.x
+  #     Role: !GetAtt 'MyFunctionRole.Arn'
+  #     Timeout: 300
+  #     Code:
+  #       S3Bucket: !Ref LambdaZipsBucket
+  #       S3Key: !Ref CodeS3Key

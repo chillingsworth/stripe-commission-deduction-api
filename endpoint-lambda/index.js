@@ -1,15 +1,7 @@
-exports.handler = async (event) => {
-
-    // TODO implement
-
+exports.handler = async (event) => {     
     const response = {
-
         statusCode: 200,
-
-        body: JSON.stringify('CloudFormation deployment successful!'),
-
-     };
-
-     return response;
-
-  };
+        body: JSON.stringify('Hello from Lambda!'),
+    };
+    return response;
+};
