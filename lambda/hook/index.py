@@ -4,21 +4,22 @@ import logging
 import json
 import stripe
 import mysql.connector
-
+import os
 
 class DBWrapper:
-    def __init__(self):
+    def __init__(self, host, user, password, db_name):
         self.mydb = mysql.connector.connect(
-        host="stripe-commission-db.c17tbmhfjkr0.us-east-1.rds.amazonaws.com",
-        user="admin",
-        password="beatnik-ashore-dutch")
+        host=host,
+        user=user,
+        password=password)
 
+        self.db_name = db_name
         self.mycursor = self.mydb.cursor()
 
     def get_customer_id(self, customer_address, customer_name):
-        query = "SELECT transactions.customers.idcustomers FROM transactions.customers \
-                WHERE transactions.customers.address = " + "'" + customer_address + "'" + \
-                " AND transactions.customers.name = " + "'" + customer_name + "'"
+        query = "SELECT exDB.customers.idcustomers FROM exDB.customers \
+                WHERE exDB.customers.address = " + "'" + customer_address + "'" + \
+                " AND exDB.customers.name = " + "'" + customer_name + "'"
         self.mycursor.execute(query)
         
         myresult = self.mycursor.fetchall()
@@ -26,8 +27,8 @@ class DBWrapper:
         return myresult
 
     def get_customer_stripe_account(self, customer_id):
-        query = "SELECT transactions.customers.stripe_account_id FROM transactions.customers \
-                WHERE transactions.customers.idcustomers = " + "'" + customer_id + "'"
+        query = "SELECT exDB.customers.stripe_account_id FROM exDB.customers \
+                WHERE exDB.customers.idcustomers = " + "'" + customer_id + "'"
         self.mycursor.execute(query)
         
         myresult = self.mycursor.fetchall()
@@ -35,7 +36,7 @@ class DBWrapper:
         return myresult
 
     def create_transfer_transaction(self, customer_id, status='TRANSFER_SUCCESSFUL'):
-        query = "INSERT INTO transactions.transactions (customer_fk, event_type) VALUES (" + \
+        query = "INSERT INTO exDB.transactions (customer_fk, event_type) VALUES (" + \
                 str(customer_id) + ", '" + status + "')"
 
         self.mycursor.execute(query)
@@ -50,17 +51,25 @@ class DBWrapper:
         create_transaction_result =  DBWrapper().create_transfer_transaction(str(customer_id))
         print(create_transaction_result) 
 
-
-logging.getLogger().setLevel(logging.INFO)
-
 def lambda_handler(event, context):
     
+    stripe.api_key = os.environ['STRIPE_API_KEY']
+
+    logging.getLogger().setLevel(logging.INFO)
+
     ##Unpack payment_intent object
-    
     payment_intent = json.loads(event['body'])['data']['object']
     logging.info(payment_intent)
-    
+
+    db = DBWrapper(host=os.environ['RDS_ENDPOINT'],
+            user=os.environ['DB_USERNAME'],
+            password=os.environ['DB_PASSWORD'],
+            db_name=os.environ['DB_NAME'])
+
+
     if payment_intent['object'] == 'payment_intent' and payment_intent['status'] == 'succeeded':
+    
+        logging.info('Payment Intent')
     
         logging.info(payment_intent['object'])
         logging.info(payment_intent['status'])
@@ -75,26 +84,30 @@ def lambda_handler(event, context):
     
         try:
             client_info = payment_intent['description']
+            
             logging.info(client_info)
-            client_addr = client_info.split(' - ')[1].lower()
-            client_name = client_info.split(' - ')[2].lower()
-            logging.info(client_addr)
-            logging.info(client_name)
+            
+            if client_info == '(created by Stripe CLI)':
+                client_addr = '111 silverstream road'
+                client_name = 'joes java'
+            else:
+                client_addr = client_info.split(' - ')[1].lower()
+                client_name = client_info.split(' - ')[2].lower()
+                logging.info(client_addr)
+                logging.info(client_name)
             
             customer_id = DBWrapper().get_customer_id(client_addr, client_name)[0][0]
             customer_stripe_id =  DBWrapper().get_customer_stripe_account(str(customer_id))[0][0]
             
             logging.info(customer_id)
             logging.info(customer_stripe_id)
-            
-            stripe.api_key = ''
     
             try:
                 result = stripe.Transfer.create(
                    amount=1,
                    currency="usd",
                    destination=customer_stripe_id,
-                   transfer_group="ORDER_95",
+                   transfer_group="ORDER_x",
                  )
             
                 logging.info(result)
@@ -106,25 +119,7 @@ def lambda_handler(event, context):
             
         except Exception as ex:
             logging.error(ex)
-        ####
-        
-        # sqs_client = boto3.client("sqs", region_name="us-east-1")
-        # response = sqs_client.send_message(
-        #     QueueUrl="https://sqs.us-east-1.amazonaws.com/484906661071/stripe-api.fifo",
-        #     MessageBody=json.dumps(payment_intent),
-        #     MessageGroupId='586474de88e03'
-        # )
-        # stripe.api_key = "sk_test_51JtVtBLGGx9YIBhrqpm9HgAEhEUe6omNNMOFKREvM9HD2Sz5PbEqaeZoDt9s934wFR98AZ8dNGa9DcClYVBT2ceW00AWzDegch"
-        # result = stripe.Transfer.create(
-        #   amount=1,
-        #   currency="usd",
-        #   destination="acct_1K1ZebPw7IujTWEe",
-        #   transfer_group="ORDER_95",
-        # )
-        # logging.info(result)
-                
-
-    # TODO implement
+ 
     return {
         'statusCode': 200,
         'body': json.dumps(payment_intent)

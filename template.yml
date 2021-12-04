@@ -35,7 +35,13 @@ Parameters:
   ApiGatewayHTTPMethod:
     Type: String
     Default: ANY
-  
+  S3Bucket:
+    Type: String
+    Default: lambda-fn-bucket-stripe
+  FnName:
+    Type: String
+    Default: lambda-hook
+    
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -192,11 +198,21 @@ Resources:
             - arn:aws:s3:::exchange-data-raw
             - arn:aws:s3:::exchange-data-raw/*
 
+  LambdaLayer:
+    Type: "AWS::Lambda::LayerVersion"
+    Properties:
+      CompatibleRuntimes:
+      - python3.9
+      Content:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Sub "lambda-layer.zip"
+      LayerName: "LayerA"
+
   LambdaHook:
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.9
-      FunctionName: lambda-hook
+      FunctionName: !Ref FnName
       Handler: index.lambda_handler
       Role:
         Fn::GetAtt:
@@ -205,6 +221,8 @@ Resources:
       Code:
         S3Bucket: lambda-fn-bucket-stripe
         S3Key: lambda-hook.zip
+      Layers:
+      - !Ref LambdaLayer
 
   ApiGateway:
       Type: AWS::ApiGateway::RestApi
@@ -240,7 +258,7 @@ Resources:
       RestApiId: !Ref ApiGateway
       StageName: !Ref ApiGatewayStageName
 
-  ApiGatewayLambdaPermission:
+  ApiGatewayLambdaPermission1:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName:
@@ -258,4 +276,4 @@ Resources:
           - Ref: AWS::AccountId
           - ":"
           - Ref: ApiGateway
-          - "/*/*/*"
+          - "/*/*"

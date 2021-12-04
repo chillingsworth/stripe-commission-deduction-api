@@ -93,16 +93,15 @@ package-deps:
     pip3 install -r requirements.txt --target aws-layer/python/lib/python3.9/site-packages; \
     cd ./aws-layer; \
     zip -r9 lambda-layer.zip .; \
-	aws lambda publish-layer-version \
-    --layer-name Data-Preprocessing \
-    --description "My Python layer" \
-    --zip-file fileb://lambda-layer.zip \
-    --compatible-runtimes python3.9;
+	aws s3 --region us-east-1 cp lambda-layer.zip s3://${BUCKET_NAME}
 
 package-lambda:
 	@cd ./lambda/hook; \
 	zip -r9 lambda-hook.zip .; \
 	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME}/
+
+set-lambda-env:
+	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}}"
 
 ifneq (,$(wildcard ./.env))
     include .env
