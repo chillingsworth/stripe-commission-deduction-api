@@ -3,6 +3,7 @@ Ready-to-use software for Web Developers who want to monetize their web services
 
 This configuration works with the GloriaFoods online food ordering platform and is configured to be deployed to production via Makefile to AWS.
 
+## System Diagram
                                                                                                                                                                                                                                                                               
                                                                                                                                                                                                                                                                               
                                                                                                                                                                                                                                                                               
