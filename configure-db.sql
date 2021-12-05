@@ -24,3 +24,5 @@ ADD CONSTRAINT `customer foreign key`
 
 INSERT INTO `exDB`.`customers` (`name`, `address`, `stripe_account_id`) VALUES ('joes java', '111 silverstream road', 'acct_1K1ZebPw7IujTWEe');
 
+ALTER TABLE `exDB`.`transactions` 
+ADD COLUMN `outgoing_transfer_id` VARCHAR(45) NULL DEFAULT NULL AFTER `customer_fk`;

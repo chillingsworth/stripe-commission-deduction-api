@@ -101,7 +101,8 @@ package-lambda:
 	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME}/
 
 set-lambda-env:
-	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}}"
+	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}, \
+	STRIPE_API_KEY=${STRIPE_API_KEY}, DB_USERNAME=${DB_USERNAME}, DB_PASSWORD=${DB_PASSWORD}, RDS_ENDPOINT=${RDS_ENDPOINT}}"
 
 ifneq (,$(wildcard ./.env))
     include .env

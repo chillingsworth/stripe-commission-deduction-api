@@ -35,9 +35,9 @@ class DBWrapper:
 
         return myresult
 
-    def create_transfer_transaction(self, customer_id, status='TRANSFER_SUCCESSFUL'):
-        query = "INSERT INTO exDB.transactions (customer_fk, event_type) VALUES (" + \
-                str(customer_id) + ", '" + status + "')"
+    def create_transfer_transaction(self, customer_id, transaction_id, transfer_id, status='TRANSFER_SUCCESSFUL'):
+        query = "INSERT INTO exDB.transactions (customer_fk, event_type, stripe_hook_transaction_id, outgoing_transfer_id) VALUES (" + \
+                str(customer_id) + ", '" + status + "', '" + transaction_id + "', '" + transfer_id + "')"
 
         self.mycursor.execute(query)
 
@@ -53,69 +53,90 @@ class DBWrapper:
 
 def lambda_handler(event, context):
     
-    stripe.api_key = os.environ['STRIPE_API_KEY']
+    COMMISSION = .01
 
     logging.getLogger().setLevel(logging.INFO)
 
-    ##Unpack payment_intent object
-    payment_intent = json.loads(event['body'])['data']['object']
-    logging.info(payment_intent)
+    stripe.api_key = os.environ['STRIPE_API_KEY']
 
     db = DBWrapper(host=os.environ['RDS_ENDPOINT'],
-            user=os.environ['DB_USERNAME'],
-            password=os.environ['DB_PASSWORD'],
-            db_name=os.environ['DB_NAME'])
+        user=os.environ['DB_USERNAME'],
+        password=os.environ['DB_PASSWORD'],
+        db_name=os.environ['DB_NAME'])
 
+    ##Unpack payment_intent object
+    payment_intent = json.loads(event['body'])['data']['object']
 
     if payment_intent['object'] == 'payment_intent' and payment_intent['status'] == 'succeeded':
     
-        logging.info('Payment Intent')
-    
-        logging.info(payment_intent['object'])
-        logging.info(payment_intent['status'])
-        logging.info(payment_intent['amount_received'])
+        logging.info('===Payment Intent Success Webhook Triggered===')
+        logging.info('---Unpacking Transaction Info From Webhook Body---')
         
-        ####
+        tx_id = payment_intent['id']
+        logging.info('Incoming Transaction Id:')
+        logging.info(tx_id)
 
-        COMMISSION = .01
         amount_received = payment_intent['amount_received']
-        transfer_amount = amount_received - (amount_received * COMMISSION)
+        logging.info('Amount Received:')
+        logging.info(amount_received)
+        
+        transfer_amount = int(amount_received - (amount_received * COMMISSION))
+        logging.info('Amount Transferring Back to Client Account:')
         logging.info(transfer_amount)
     
         try:
+            logging.info('---Unpacking Transaction Info From Webhook Body---')
+
             client_info = payment_intent['description']
-            
+            logging.info('Unparsed Client Information:')
             logging.info(client_info)
             
+            ##Check API Test Case
             if client_info == '(created by Stripe CLI)':
+                logging.info('---Recieved Test API Request---')
                 client_addr = '111 silverstream road'
                 client_name = 'joes java'
             else:
                 client_addr = client_info.split(' - ')[1].lower()
                 client_name = client_info.split(' - ')[2].lower()
+                logging.info('Parsed Client Information:')
                 logging.info(client_addr)
                 logging.info(client_name)
             
-            customer_id = DBWrapper().get_customer_id(client_addr, client_name)[0][0]
-            customer_stripe_id =  DBWrapper().get_customer_stripe_account(str(customer_id))[0][0]
-            
+            logging.info('---Retrieving Client Stripe Id From Database---')
+
+            customer_id = db.get_customer_id(client_addr, client_name)[0][0]
+            customer_stripe_id =  db.get_customer_stripe_account(str(customer_id))[0][0]
+            logging.info('Client Database Id:')
             logging.info(customer_id)
+            logging.info('Client Stripe Id:')
             logging.info(customer_stripe_id)
     
             try:
+
+                logging.info('---Attempting Stripe Transfer---')
+
                 result = stripe.Transfer.create(
-                   amount=1,
+                   amount=transfer_amount,
                    currency="usd",
                    destination=customer_stripe_id,
                    transfer_group="ORDER_x",
                  )
-            
+                logging.info('---Transfer Success---')
+                logging.info('Transfer Result:')
                 logging.info(result)
-                DBWrapper().create_transfer_transaction(str(customer_id))
+                
+                logging.info('Outgoing Client Transfer Id:')
+                tr_id = result['id']
+                logging.info(tr_id)
+                
+                db.create_transfer_transaction(str(customer_id), tx_id, tr_id)
             
             except Exception as ex:
+                logging.info('!!!Transfer Failure!!!')
                 logging.error(ex)
-                DBWrapper().create_transfer_transaction(str(customer_id), 'TRANSFER_FAILURE')
+
+                db.create_transfer_transaction(str(customer_id), tx_id, tr_id, 'TRANSFER_FAILURE')
             
         except Exception as ex:
             logging.error(ex)
@@ -124,4 +145,3 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps(payment_intent)
     }
-
