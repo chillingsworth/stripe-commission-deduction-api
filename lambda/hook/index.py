@@ -17,9 +17,9 @@ class DBWrapper:
         self.mycursor = self.mydb.cursor()
 
     def get_customer_id(self, customer_address, customer_name):
-        query = "SELECT exDB.customers.idcustomers FROM exDB.customers \
-                WHERE exDB.customers.address = " + "'" + customer_address + "'" + \
-                " AND exDB.customers.name = " + "'" + customer_name + "'"
+        query = "SELECT stripedb.customers.idcustomers FROM stripedb.customers \
+                WHERE stripedb.customers.address = " + "'" + customer_address + "'" + \
+                " AND stripedb.customers.name = " + "'" + customer_name + "'"
         self.mycursor.execute(query)
         
         myresult = self.mycursor.fetchall()
@@ -27,8 +27,8 @@ class DBWrapper:
         return myresult
 
     def get_customer_stripe_account(self, customer_id):
-        query = "SELECT exDB.customers.stripe_account_id FROM exDB.customers \
-                WHERE exDB.customers.idcustomers = " + "'" + customer_id + "'"
+        query = "SELECT stripedb.customers.stripe_account_id FROM stripedb.customers \
+                WHERE stripedb.customers.idcustomers = " + "'" + customer_id + "'"
         self.mycursor.execute(query)
         
         myresult = self.mycursor.fetchall()
@@ -36,7 +36,7 @@ class DBWrapper:
         return myresult
 
     def create_transfer_transaction(self, customer_id, transaction_id, transfer_id, status='TRANSFER_SUCCESSFUL'):
-        query = "INSERT INTO exDB.transactions (customer_fk, event_type, stripe_hook_transaction_id, outgoing_transfer_id) VALUES (" + \
+        query = "INSERT INTO stripedb.transactions (customer_fk, event_type, stripe_hook_transaction_id, outgoing_transfer_id) VALUES (" + \
                 str(customer_id) + ", '" + status + "', '" + transaction_id + "', '" + transfer_id + "')"
 
         self.mycursor.execute(query)

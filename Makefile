@@ -21,29 +21,47 @@ create-ec2-key-pair: install-requirements
 		chmod 400 $$keyname.pem;
     endif
 
+configure:
+	@echo "#Stripe API Commission Project Configuration#"; \
+    echo "##Enter desired infrastructure variable names in the following prompts##"; \
+    echo "------------------------------------------------------------------------"; \
+	read -p "Enter Stripe API Key:" stripe_api_key; \
+	echo STRIPE_API_KEY=$$stripe_api_key  >> .env; \
+	read -p "Enter AWS Stack Name:" stack; \
+	echo STACK_NAME=$$stack  >> .env; \
+	read -p "Enter AWS Stack S3 Bucket Name:" bucket_name; \
+	echo BUCKET_NAME=$$bucket_name  >> .env; \
+	read -p "Enter RDS Database Name:" rds_name; \
+	echo RDS_NAME=$$rds_name  >> .env; \
+	echo DB_NAME=stripedb  >> .env; \
+	read -p "Enter MySQL DB Username:" db_username; \
+	echo DB_USERNAME=$$db_username  >> .env; \
+	read -p "Enter MySQL DB Username Password:" db_password; \
+	echo DB_PASSWORD=$$db_password  >> .env; \
+
 create-stack: load-env
-    ifeq (,$(KEYPAIR_NAME))
-	    @echo "Run 'make create-ec2-key-pair' first";
-		exit 1;
-    endif
-    ifeq (,${STACK_NAME})
-	    @read -p "Enter New AWS Stack Name:" stack; \
-        aws cloudformation create-stack --stack-name \
-        $$stack --template-body $(cloudformation-template) \
-		--parameters ParameterValue=${KEYPAIR_NAME} \
-		--capabilities CAPABILITY_IAM; \
-        echo STACK_NAME=$$stack  >> .env; \
-		aws cloudformation wait stack-create-complete --stack-name $$stack;
-    endif
+	@aws cloudformation create-stack --stack-name \
+	${STACK_NAME} --template-body $(cloudformation-template) \
+	--parameters ParameterKey=DatabaseName,ParameterValue=${DB_NAME} \
+	ParameterKey=DBMasterUsername,ParameterValue=${DB_USERNAME} \
+	ParameterKey=DBMasterUserPassword,ParameterValue=${DB_PASSWORD} \
+	ParameterKey=S3BucketName,ParameterValue=${BUCKET_NAME} \
+	--capabilities CAPABILITY_IAM; \
+	aws cloudformation wait stack-create-complete --stack-name ${STACK_NAME};
 
 update-stack:
 	@aws cloudformation update-stack --stack-name ${STACK_NAME} \
 	--template-body $(cloudformation-template) \
+	--parameters ParameterKey=DatabaseName,ParameterValue=${DB_NAME} \
+	ParameterKey=DBMasterUsername,ParameterValue=${DB_USERNAME} \
+	ParameterKey=DBMasterUserPassword,ParameterValue=${DB_PASSWORD} \
+	ParameterKey=S3BucketName,ParameterValue=${BUCKET_NAME} \
 	--capabilities CAPABILITY_IAM; \
 	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 delete-stack:
-	@aws cloudformation delete-stack --stack-name ${STACK_NAME}
+	@aws cloudformation delete-stack --stack-name ${STACK_NAME}; \
+	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 zip-lambda:
 	@rm -r ./endpoint-lambda/*.zip; \
@@ -67,8 +85,8 @@ connect-ec2:
 	@ssh -i ${KEYPAIR_NAME}.pem ubuntu@$(shell $(call instance-ip))
 
 connect-db:
-	@mysql --host=sd1m6q6oe1xmmqb.c17tbmhfjkr0.us-east-1.rds.amazonaws.com \
-	--user=example --password=password exDB
+	@mysql --host=${RDS_ENDPOINT} \
+	--user=${DB_USERNAME} --password=${DB_PASSWORD} ${DB_NAME}
 
 get-db-url:
 	@echo RDS_ENDPOINT=$$(aws rds describe-db-instances \

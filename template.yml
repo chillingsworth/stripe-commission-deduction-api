@@ -1,19 +1,26 @@
 Description: "Cloudformation template for deploying architecture for stripe commissions project" 
 
 Parameters:
+  ApiGatewayName:
+      Type: String
+      Default: my-api
+  ApiGatewayStageName:
+    Type: String
+    AllowedPattern: "[a-z0-9]+"
+    Default: call
+  ApiGatewayHTTPMethod:
+    Type: String
+    Default: ANY
   DatabaseName:
     Type: String
     Description: Name of up to 8 characters to identify your database
     AllowedPattern: "\\w{1,8}"
-    Default: exDB
   DBMasterUsername:
     Type: String
     Description: Master username for the DB cluster
-    Default: example
   DBMasterUserPassword:
     Type: String
-    Description: Master user's password for the DB cluster
-    Default: password
+    Description: Master user's password for the DB clusterd
   DBInstanceClass:
     Type: String
     Description: Database instance type
@@ -25,23 +32,12 @@ Parameters:
     MinValue: '5'
     MaxValue: '1024'
     ConstraintDescription: must be between 5 and 1024Gb.
-  ApiGatewayName:
-      Type: String
-      Default: my-api
-  ApiGatewayStageName:
-    Type: String
-    AllowedPattern: "[a-z0-9]+"
-    Default: call
-  ApiGatewayHTTPMethod:
-    Type: String
-    Default: ANY
-  S3Bucket:
-    Type: String
-    Default: lambda-fn-bucket-stripe
   FnName:
     Type: String
     Default: lambda-hook
-    
+  S3BucketName:
+    Type: String
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -204,7 +200,7 @@ Resources:
       CompatibleRuntimes:
       - python3.9
       Content:
-        S3Bucket: !Ref S3Bucket
+        S3Bucket: !Ref S3BucketName
         S3Key: !Sub "lambda-layer.zip"
       LayerName: "LayerA"
 
@@ -219,7 +215,7 @@ Resources:
         - LambdaFunctionRole
         - Arn
       Code:
-        S3Bucket: lambda-fn-bucket-stripe
+        S3Bucket: !Ref S3BucketName
         S3Key: lambda-hook.zip
       Layers:
       - !Ref LambdaLayer

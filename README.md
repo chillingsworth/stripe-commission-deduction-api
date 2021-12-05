@@ -2,7 +2,6 @@
 API and cloud infrastructure for deducting commission from Stripe account deposits and forwarding the remainder to customer Stripe accounts
 
 ##Deploying
-
 1. Run ```make package-deps```
 2. Run ```make create-code-bucket```
 3. RUN ```make package-lambda```
