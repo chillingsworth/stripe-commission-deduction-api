@@ -37,6 +37,8 @@ Parameters:
     Default: lambda-hook
   S3BucketName:
     Type: String
+  RDSName:
+    Type: String
 
 Resources:
   VPC:
@@ -146,6 +148,7 @@ Resources:
   Database:
     Type: AWS::RDS::DBInstance
     Properties:
+      DBInstanceIdentifier: !Ref RDSName
       DBName: !Ref DatabaseName
       AllocatedStorage: !Ref DBAllocatedStorage
       DBInstanceClass: !Ref DBInstanceClass
