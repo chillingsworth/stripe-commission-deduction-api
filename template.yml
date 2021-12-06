@@ -3,11 +3,9 @@ Description: "Cloudformation template for deploying architecture for stripe comm
 Parameters:
   ApiGatewayName:
       Type: String
-      Default: my-api
   ApiGatewayStageName:
     Type: String
     AllowedPattern: "[a-z0-9]+"
-    Default: call
   ApiGatewayHTTPMethod:
     Type: String
     Default: ANY
