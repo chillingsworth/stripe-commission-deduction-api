@@ -118,13 +118,9 @@ compose-api-endpoint:
 	.execute-api.${AWS_REGION}.amazonaws.com/\
 	${API_STAGE_NAME}/  >> .env;
 
-test-deployment: load-env
-	stripe listen --forward-to ${API_ENDPOINT} \
-	& stripe trigger payment_intent.succeeded;
-
 deploy: create-stack load-env configure-db set-lambda-env \
-get-api-id load-env compose-api-endpoint test-deployment
-	echo "Deployment is Live";
+get-api-id load-env compose-api-endpoint
+	@echo "Deployment is Live";
 
 connect-db: get-db-url
 	@mysql --host=${RDS_ENDPOINT} \

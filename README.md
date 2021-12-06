@@ -25,8 +25,9 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 * Deployment will take time. Give the command 10 mins or so to setup the AWS infrastructure
 
 ### Testing the Deployment from Terminal
-1. ```stripe listen --forward-to https://${API_ENDPOINT}/call/```
+1. ```stripe listen --forward-to ${API_ENDPOINT}```
 2. ```stripe trigger payment_intent.succeeded``` (from a separate terminal window)
+* Note that the ```stripe listen``` process will persist and cause multiple event triggering. Be sure to kill that process before starting another ```stripe listen ...``` process via command shown in step 1
 
 ### Troubleshooting
 1. ```make clean``` will delete the dotenv (.env) file
