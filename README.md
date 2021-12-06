@@ -16,7 +16,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 * Deployment will take time. Give the command 10 mins or so to setup the AWS infrastructure
 
 ### Testing the Deployment from Terminal
-1. ```stripe listen --forward-to https://${RDS_ENDPOINT}/call/```
+1. ```stripe listen --forward-to https://${API_ENDPOINT}/call/```
 2. ```stripe trigger payment_intent.succeeded``` (from a separate terminal window)
 
 ### Troubleshooting
