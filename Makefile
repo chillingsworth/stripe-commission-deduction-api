@@ -15,6 +15,8 @@ configure: install-requirements
 	@echo "#Stripe API Commission Project Configuration#"; \
     echo "##Enter desired infrastructure variable names in the following prompts##"; \
     echo "------------------------------------------------------------------------"; \
+	read -p "Enter AWS CLI Profile Name:" aws_profile_name; \
+	echo AWS_PROFILE=$$aws_profile_name  >> .env; \
 	read -p "Enter Stripe API Key:" stripe_api_key; \
 	echo STRIPE_API_KEY=$$stripe_api_key  >> .env; \
 	read -p "Enter AWS Stack Name:" stack; \
@@ -31,7 +33,7 @@ configure: install-requirements
 	echo DB_PASSWORD=$$db_password  >> .env; \
 
 create-code-bucket: load-env
-	@aws s3api create-bucket --bucket ${BUCKET_NAME} --region us-east-1
+	@aws s3api create-bucket --bucket ${BUCKET_NAME} --region us-east-2 --create-bucket-configuration LocationConstraint=us-east-2
 
 package-deps: create-code-bucket
 	@mkdir -p ./build/aws-layer/python/lib/python3.9/site-packages; \
@@ -70,7 +72,9 @@ update-stack: package-lambda
 	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 delete-stack:
-	@aws cloudformation delete-stack --stack-name ${STACK_NAME}; \
+	@aws s3 rm s3://${BUCKET_NAME} --recursive; \
+	aws s3api delete-bucket --bucket ${BUCKET_NAME}; \
+	aws cloudformation delete-stack --stack-name ${STACK_NAME}; \
 	aws cloudformation wait stack-update-complete --stack-name ${STACK_NAME};
 
 get-db-url:
@@ -94,11 +98,11 @@ set-lambda-env:
 	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}, \
 	STRIPE_API_KEY=${STRIPE_API_KEY}, DB_USERNAME=${DB_USERNAME}, DB_PASSWORD=${DB_PASSWORD}, RDS_ENDPOINT=${RDS_ENDPOINT}}"
 
-deploy: create-stack configure-db load-env set-lambda-env   
+deploy: create-stack load-env configure-db set-lambda-env   
 	@echo "Deployment is Live";
 
 test-deployment:
-	@stripe listen --forward-to https://jrfglwxbqj.execute-api.us-east-1.amazonaws.com/call/ \
+	@stripe listen --forward-to https://5xvocikph1.execute-api.us-east-2.amazonaws.com/call/ \
 	& stripe trigger payment_intent.succeeded;
 
 clean:

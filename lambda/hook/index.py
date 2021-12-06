@@ -113,7 +113,6 @@ def lambda_handler(event, context):
             logging.info(customer_stripe_id)
     
             try:
-
                 logging.info('---Attempting Stripe Transfer---')
 
                 result = stripe.Transfer.create(
