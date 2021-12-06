@@ -10,6 +10,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 ## Deploy from Terminal
 1. ```make configure```
 * Your input is saved to a dotenv file (called .env) in the project directory
+* Be sure to use the AWS CLI profile name you'd like to use. You can find this by looking in ```~/.aws/credentials```
 2. ```make deploy```
 * The infrastructure is live if you get a ```Deployment is Live``` message
 * Deployment will take time. Give the command 10 mins or so to setup the AWS infrastructure
