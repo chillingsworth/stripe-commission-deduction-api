@@ -9,7 +9,10 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 
 ## Environment Setup
 1. Install Docker on your local environment
-2. ```make docker-run```
+2. Make sure you have run ```aws configure``` on your local machine and have configured an AWS profile
+* For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
+3. ```make docker-run```
+* This creates an environment for this project and copies your local ~/.aws credentials folder into the container
 
 **All instructions below are assumed to be executed from the command line of this running container**
 
