@@ -147,6 +147,7 @@ Resources:
 
   Database:
     Type: AWS::RDS::DBInstance
+    DependsOn: AttachGateway
     Properties:
       DBInstanceIdentifier: !Ref RDSName
       DBName: !Ref DatabaseName
@@ -276,3 +277,7 @@ Resources:
           - ":"
           - Ref: ApiGateway
           - "/*/*"
+
+Outputs:
+  APIDomainNameWithStage:
+    Value: !Sub '${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}'

@@ -79,7 +79,7 @@ get-db-url:
     --query "*[].[DBInstanceIdentifier,Endpoint.Address,Endpoint.Port,MasterUsername]" \
     | jq -r '.[][1]';) >> .env
 
-configure-db: get-db-url
+configure-db: get-db-url load-env
 	@echo ${DB_USERNAME}; \
     echo ${DB_PASSWORD}; \
     echo ${RDS_ENDPOINT}; \
@@ -94,8 +94,12 @@ set-lambda-env:
 	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}, \
 	STRIPE_API_KEY=${STRIPE_API_KEY}, DB_USERNAME=${DB_USERNAME}, DB_PASSWORD=${DB_PASSWORD}, RDS_ENDPOINT=${RDS_ENDPOINT}}"
 
-deploy: create-stack configure-db set-lambda-env
+deploy: create-stack configure-db load-env set-lambda-env   
 	@echo "Deployment is Live";
+
+test-deployment:
+	@stripe listen --forward-to https://jrfglwxbqj.execute-api.us-east-1.amazonaws.com/call/ \
+	& stripe trigger payment_intent.succeeded;
 
 clean:
 	@rm .env;
