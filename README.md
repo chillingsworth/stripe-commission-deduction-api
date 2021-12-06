@@ -7,6 +7,12 @@ This configuration works with the GloriaFoods online food ordering platform and 
 
 Note: The Access Control Lists and Security Group configurations are set to be wide open so that the Web Developer can see the deployed MySQL database to observe the transaction ledger from any IP address. If you want better security, consider constraining the allowed IPs in the ACL/SGs to match your individual IP address.
 
+## Environment Setup
+1. Install Docker on your local environment
+2. ```make docker-run```
+
+**All instructions below are assumed to be executed from the command line of this running container**
+
 ## Deploy from Terminal
 1. ```make configure```
 * Your input is saved to a dotenv file (called .env) in the project directory

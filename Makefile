@@ -8,8 +8,11 @@ load-env:
         export
     endif
 
-install-requirements:
-	@sudo apt-get install --assume-yes jq
+docker-build:
+	@docker build -t stripe .
+
+docker-run: docker-build
+	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe
 
 configure: install-requirements
 	@echo "#Stripe API Commission Project Configuration#"; \
@@ -35,7 +38,7 @@ configure: install-requirements
 create-code-bucket: load-env
 	@aws s3api create-bucket --bucket ${BUCKET_NAME} --region us-east-2 --create-bucket-configuration LocationConstraint=us-east-2
 
-package-deps: create-code-bucket
+package-deps: load-env
 	@mkdir -p ./build/aws-layer/python/lib/python3.9/site-packages; \
 	cp requirements.txt ./build/; \
     cd ./build; \
@@ -49,7 +52,7 @@ package-lambda: package-deps
 	zip -r9 lambda-hook.zip .; \
 	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME}/;
 
-create-stack: package-lambda
+create-stack: create-code-bucket package-lambda
 	@aws cloudformation create-stack --stack-name \
 	${STACK_NAME} --template-body $(cloudformation-template) \
 	--parameters ParameterKey=DatabaseName,ParameterValue=${DB_NAME} \
