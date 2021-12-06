@@ -23,9 +23,9 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 1. ```make clean``` will delete the dotenv (.env) file
 2. Re-deploy the app via the instructions above
 
-## Teardown from Terminal
-1. ```make delete-stack```
-
 ## Switching from Test to Prod
 1. Change the ```STRIPE_API_KEY``` value in your dotenv file to the appropriate key
 2. ```make set-lambda-env```
+
+## Teardown from Terminal
+1. ```make delete-stack```
