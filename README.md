@@ -10,7 +10,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 ## Setup and Run
 1. Install Docker on your local machine
 2. The docker container copies the ~/.aws/credentials file into the container when it's run, so make sure you have credentials in that file for an IAM role with appropriate privledges
-** For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
+* For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
 3. ```make easy-configure```
 * Checkout the default values in the .conf file and feel free to change
 4. ```make docker-run```
