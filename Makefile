@@ -110,6 +110,9 @@ get-db-url:
     | jq -r '.[][1]';) >> .env; \
 	export RDS_ENDPOINT;
 
+docker-configure-db:
+	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe make configure-db;
+
 configure-db: get-db-url
 	@echo ${DB_USERNAME}; \
     echo ${DB_PASSWORD}; \
@@ -134,7 +137,7 @@ compose-api-endpoint:
 	.execute-api.${AWS_REGION}.amazonaws.com/\
 	${API_STAGE_NAME}/  >> .env;
 
-deploy: create-stack load-env configure-db set-lambda-env \
+deploy: create-stack load-env set-lambda-env \
 get-api-id load-env compose-api-endpoint
 	@echo "Deployment is Live";
 
