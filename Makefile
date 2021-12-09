@@ -7,6 +7,7 @@ cloudformation-template=file://template.yml
 load-env:
     ifneq (,$(wildcard ./.env))
         include .env
+	include .conf
         export
     endif
 
@@ -25,23 +26,34 @@ configure: setup
     echo "##Enter desired infrastructure variable names in the following prompts##"; \
     echo "------------------------------------------------------------------------"; \
 	read -p "Enter AWS CLI Profile Name:" aws_profile_name; \
-	echo AWS_PROFILE=$$aws_profile_name  >> .env; \
+	echo AWS_PROFILE=$$aws_profile_name  >> .conf; \
 	read -p "Enter AWS CLI Profile Region:" aws_region; \
-	echo AWS_REGION=$$aws_region  >> .env; \
+	echo AWS_REGION=$$aws_region  >> .conf; \
 	read -p "Enter API Stage Name:" api_stage_name; \
-	echo API_STAGE_NAME=$$api_stage_name  >> .env; \
+	echo API_STAGE_NAME=$$api_stage_name  >> .conf; \
 	read -p "Enter API Name:" api_name; \
-	echo API_NAME=$$api_name  >> .env; \
+	echo API_NAME=$$api_name  >> .conf; \
 	read -p "Enter Stripe API Key:" stripe_api_key; \
 	echo STRIPE_API_KEY=$$stripe_api_key  >> .env; \
 	read -p "Enter AWS Stack Name:" stack; \
-	echo STACK_NAME=$$stack  >> .env; \
+	echo STACK_NAME=$$stack  >> .conf; \
 	read -p "Enter AWS Stack S3 Bucket Name:" bucket_name; \
-	echo BUCKET_NAME=$$bucket_name  >> .env; \
+	echo BUCKET_NAME=$$bucket_name  >> .conf; \
 	read -p "Enter AWS RDS Instance Name:" rds_name; \
-	echo RDS_NAME=$$rds_name  >> .env; \
+	echo RDS_NAME=$$rds_name  >> .conf; \
 	read -p "Enter MySQL Database Name:" db_name; \
-	echo DB_NAME=$$db_name  >> .env; \
+	echo DB_NAME=$$db_name  >> .conf; \
+	read -p "Enter MySQL DB Username:" db_username; \
+	echo DB_USERNAME=$$db_username  >> .env; \
+	read -p "Enter MySQL DB Username Password:" db_password; \
+	echo DB_PASSWORD=$$db_password  >> .env;
+	
+easy-configure: setup
+	@echo "#Stripe API Commission Project Configuration#"; \
+    echo "##Enter desired infrastructure variable names in the following prompts##"; \
+    echo "------------------------------------------------------------------------"; \
+	read -p "Enter Stripe API Key:" stripe_api_key; \
+	echo STRIPE_API_KEY=$$stripe_api_key  >> .env; \
 	read -p "Enter MySQL DB Username:" db_username; \
 	echo DB_USERNAME=$$db_username  >> .env; \
 	read -p "Enter MySQL DB Username Password:" db_password; \
