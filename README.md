@@ -7,31 +7,25 @@ This configuration works with the GloriaFoods online food ordering platform and 
 
 Note: The Access Control Lists and Security Group configurations are set to be wide open so that the Web Developer can see the deployed MySQL database to observe the transaction ledger from any IP address. If you want better security, consider constraining the allowed IPs in the ACL/SGs to match your individual IP address.
 
-## Environment Setup
-1. Install Docker on your local environment
-2. Make sure you have run ```aws configure``` on your local machine and have configured an AWS profile
+## Setup and Run
+1. Install Docker on your local machine
+2. The docker container copies the ~/.aws/credentials file into the container when it's run, so make sure you have credentials in that file for an IAM role with appropriate privledges
 * For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
-3. ```make docker-run```
-* This creates an environment for this project and copies your local ~/.aws credentials folder into the container
+4. ```make easy-configure```
+* Checkout the default values in the .conf file and feel free to change
+6. ```make docker-run```
 
 **All instructions below are assumed to be executed from the command line of this running container**
 
-## Deploy from Terminal
-1. ```make configure```
-* Your input is saved to a dotenv file (called .env) in the project directory
-* Be sure to use the AWS CLI profile name you'd like to use. You can find this by looking in ```~/.aws/credentials```
-2. ```make deploy```
-* The infrastructure is live if you get a ```Deployment is Live``` message
-* Deployment will take time. Give the command 10 mins or so to setup the AWS infrastructure
-
-### Testing the Deployment from Terminal
+## Testing the Deployment from Terminal
 1. ```stripe listen --forward-to ${API_ENDPOINT}```
 2. ```stripe trigger payment_intent.succeeded``` (from a separate terminal window)
 * Note that the ```stripe listen``` process will persist and cause multiple event triggering. Be sure to kill that process before starting another ```stripe listen ...``` process via command shown in step 1
 
-### Troubleshooting
+## Troubleshooting
 1. ```make clean``` will delete the dotenv (.env) file
 2. Re-deploy the app via the instructions above
+3. Be sure you have unique AWS item names in the .conf file as conflicts may arise due to stack naming rules in AWS
 
 ## Switching from Test to Prod
 1. Change the ```STRIPE_API_KEY``` value in your dotenv file to the appropriate key
