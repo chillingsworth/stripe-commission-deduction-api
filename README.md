@@ -8,7 +8,7 @@ This configuration works with the GloriaFoods online food ordering platform and 
 Note: The Access Control Lists and Security Group configurations are set to be wide open so that the Web Developer can see the deployed MySQL database to observe the transaction ledger from any IP address. If you want better security, consider constraining the allowed IPs in the ACL/SGs to match your individual IP address.
 
 ## Setup and Run
-1. Install Docker on your local machine
+1. Install [Docker](https://docs.docker.com/engine/install/) and [GNU Make](https://www.gnu.org/software/make/) on your local machine
 2. The docker container copies the ~/.aws/credentials file into the container when it's run, so make sure you have credentials in that file for an IAM role with appropriate privledges
     * For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
 4. ```make easy-configure```
