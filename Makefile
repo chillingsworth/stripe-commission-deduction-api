@@ -14,7 +14,7 @@ docker-build:
 	@docker build -t stripe .
 
 docker-run: docker-build
-	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe
+	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe make deploy
 
 setup:
 	@stripe login; \
