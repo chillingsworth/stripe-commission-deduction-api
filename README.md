@@ -19,8 +19,8 @@ Note: The Access Control Lists and Security Group configurations are set to be w
     * This creates the tables in the new database along with a test client record
 
 ## Testing the Deployment from Terminal
-    * Requires stripe CLI. To install on Debian: ```wget https://github.com/stripe/stripe-cli/releases/download/v1.7.8/stripe_1.7.8_linux_x86_64.tar.gz && \
-tar -xvf stripe_1.7.8_linux_x86_64.tar.gz -C /usr/local/bin```
+* Requires stripe CLI. To install on Debian: 
+```wget https://github.com/stripe/stripe-cli/releases/download/v1.7.8/stripe_1.7.8_linux_x86_64.tar.gz && tar -xvf stripe_1.7.8_linux_x86_64.tar.gz -C /usr/local/bin```
 1. ```stripe listen --forward-to ${API_ENDPOINT}```
 2. ```stripe trigger payment_intent.succeeded``` (from a separate terminal window)
     * Note that the ```stripe listen``` process will persist and cause multiple event triggering. Be sure to kill that process before starting another ```stripe listen ...``` process via command shown in step 1
