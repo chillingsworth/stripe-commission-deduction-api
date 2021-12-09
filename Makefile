@@ -122,7 +122,7 @@ compose-api-endpoint:
 	.execute-api.${AWS_REGION}.amazonaws.com/\
 	${API_STAGE_NAME}/  >> .env;
 
-deploy: create-stack load-env configure-db set-lambda-env \
+deploy: setup create-stack load-env configure-db set-lambda-env \
 get-api-id load-env compose-api-endpoint
 	@echo "Deployment is Live";
 
