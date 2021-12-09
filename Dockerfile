@@ -18,7 +18,7 @@ RUN apt-get install -y software-properties-common && \
 add-apt-repository ppa:deadsnakes/ppa && \
 apt-get update && \
 apt-get install -y python3.9 && \
-apt-get install python3-pip
+apt-get install -y python3-pip
 
 
 WORKDIR /root/code
