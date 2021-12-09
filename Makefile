@@ -16,7 +16,11 @@ docker-build:
 docker-run: docker-build
 	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe
 
-configure:
+setup:
+	@stripe login; \
+	aws configure;
+
+configure: setup
 	@echo "#Stripe API Commission Project Configuration#"; \
     echo "##Enter desired infrastructure variable names in the following prompts##"; \
     echo "------------------------------------------------------------------------"; \
