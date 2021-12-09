@@ -15,7 +15,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 * Checkout the default values in the .conf file and feel free to change
 4. ```make docker-run```
 * This uses the values from the .env file and .conf file to create the cloudformation stack. This will take 10 mins or so to complete, so be patient.
-6. ```make docker-configure-db```
+5. ```make docker-configure-db```
 * This creates the tables in the new database along with a test client record
 
 ## Testing the Deployment from Terminal
