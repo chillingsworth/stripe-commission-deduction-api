@@ -9,6 +9,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 
 ## Setup and Run
 1. Install [Docker](https://docs.docker.com/engine/install/) and [GNU Make](https://www.gnu.org/software/make/) on your local machine
+    * If you get permission denied with Docker, follow the instructions to give your user access to the docker group: ```https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue```
 2. The docker container copies the ~/.aws/credentials file into the container when it's run, so make sure you have credentials in that file for an IAM role with appropriate privledges
     * For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
 4. ```make easy-configure```
