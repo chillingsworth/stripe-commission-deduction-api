@@ -15,11 +15,12 @@ Note: The Access Control Lists and Security Group configurations are set to be w
 3. ```make easy-configure```
     * Checkout the default values in the .conf file and feel free to change
 4. ```make docker-run```
-    * This uses the values from the .env file and .conf file to create the cloudformation stack. This will take 10 mins or so to complete, so be patient.
-5. ```make set-lambda-env```
-    * This sets the environment variables for the lambda function (ex. stripe api key and db endpoint)
-6. ```make docker-configure-db```
+    * This uses the values from the .env file and .conf file to create the cloudformation stack. This will take 10 mins or so to complete, so be patient
+5. ```make docker-configure-db```
     * This creates the tables in the new database along with a test client record
+6. ```make set-lambda-env```
+    * This sets the environment variables for the lambda function (ex. stripe api key and db endpoint)
+
 
 
 ## Testing the Deployment from Terminal
