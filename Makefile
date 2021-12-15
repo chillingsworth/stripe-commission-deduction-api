@@ -11,11 +11,12 @@ load-env:
         export
     endif
 
+
 docker-build:
 	@docker build -t stripe .
 
 docker-run: docker-build
-	@docker run -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe make deploy
+	@docker run --env-file ./.conf  -it -v ~/.aws:/root/.aws -v ${PWD}:/root/code/ stripe make deploy
 
 setup:
 	@stripe login; \
@@ -75,7 +76,7 @@ package-deps: load-env
 package-lambda: package-deps
 	@cd ./lambda/hook; \
 	zip -r9 lambda-hook.zip .; \
-	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME}/;
+	aws s3 cp lambda-hook.zip s3://${BUCKET_NAME};
 
 create-stack: create-code-bucket package-lambda load-env
 	@aws cloudformation create-stack --stack-name \
@@ -121,15 +122,16 @@ configure-db: get-db-url
 	mysql -u ${DB_USERNAME} -p${DB_PASSWORD} -h ${RDS_ENDPOINT} ${DB_NAME} < "./configure-db.sql"
 
 set-lambda-env:
-	@aws lambda update-function-configuration --function-name lambda-hook --environment Variables="{DB_NAME=${DB_NAME}, \
-	STRIPE_API_KEY=${STRIPE_API_KEY}, DB_USERNAME=${DB_USERNAME}, DB_PASSWORD=${DB_PASSWORD}, RDS_ENDPOINT=${RDS_ENDPOINT}}"
+	@aws lambda update-function-configuration --function-name lambda-hook \
+	--environment Variables="{DB_NAME=${DB_NAME}, STRIPE_API_KEY=${STRIPE_API_KEY}, \
+	DB_USERNAME=${DB_USERNAME}, DB_PASSWORD=${DB_PASSWORD}, RDS_ENDPOINT=${RDS_ENDPOINT}}"
 
 api-test:
-	@echo $(shell aws apigateway get-rest-apis --profile ${AWS_PROFILE} \
+	@echo $(shell aws apigateway get-rest-apis \
 	--query 'items[?name==`my-api`][id][0]' --output text);
 
 get-api-id:
-	@echo API_ID=$(shell aws apigateway get-rest-apis --profile ${AWS_PROFILE} \
+	@echo API_ID=$(shell aws apigateway get-rest-apis \
 	--query 'items[?name==`${API_NAME}`][id][0]' --output text)  >> .env;
 
 compose-api-endpoint:

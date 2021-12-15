@@ -17,6 +17,7 @@ class DBWrapper:
         self.mycursor = self.mydb.cursor()
 
     def get_customer_id(self, customer_address, customer_name):
+        customer_name = customer_name.replace("'", "''")
         query = "SELECT stripedb.customers.idcustomers FROM stripedb.customers \
                 WHERE stripedb.customers.address = " + "'" + customer_address + "'" + \
                 " AND stripedb.customers.name = " + "'" + customer_name + "'"
@@ -109,8 +110,8 @@ def lambda_handler(event, context):
                 ##Check API Test Case
                 if client_info == '(created by Stripe CLI)':
                     logging.info('---Recieved Test API Request---')
-                    client_addr = '111 silverstream road'
-                    client_name = 'joes java'
+                    client_addr = "test"
+                    client_name = "tim's tea"
                 else:
                     client_addr = client_info.split(' - ')[1].lower()
                     client_name = client_info.split(' - ')[2].lower()
@@ -119,9 +120,19 @@ def lambda_handler(event, context):
                     logging.info(client_name)
                 
                 logging.info('---Retrieving Client Stripe Id From Database---')
-    
-                customer_id = db.get_customer_id(client_addr, client_name)[0][0]
-                customer_stripe_id =  db.get_customer_stripe_account(str(customer_id))[0][0]
+                customer = db.get_customer_id(client_addr, client_name)
+                
+                if len(customer) != 0:
+                    customer_id = customer[0][0]
+                    customer_stripe =  db.get_customer_stripe_account(str(customer_id))
+                    if len(customer_stripe) != 0:
+                        customer_stripe_id =  customer_stripe[0][0]
+                    else:
+                        customer_stripe_id = -1
+                else:
+                    customer_id = -1
+                    customer_stripe_id = -1
+                    
                 logging.info('Client Database Id:')
                 logging.info(customer_id)
                 logging.info('Client Stripe Id:')
