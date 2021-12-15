@@ -32,7 +32,7 @@ Note: The Access Control Lists and Security Group configurations are set to be w
    source .env
    set +o allexport
    ```
-3. ```stripe listen --forward-to ${API_ENDPOINT}```
+3. ```stripe listen --forward-to $API_ENDPOINT/$API_STAGE_NAME/```
 4. ```stripe trigger payment_intent.succeeded``` (from a separate terminal window)
     * Note that the ```stripe listen``` process will persist and cause multiple event triggering. Be sure to kill that process before starting another ```stripe listen ...``` process via command shown in step 1
 
