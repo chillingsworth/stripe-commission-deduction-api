@@ -12,13 +12,13 @@ Note: The Access Control Lists and Security Group configurations are set to be w
     * If you get permission denied with Docker, follow the instructions to give your user access to the docker group: ```https://stackoverflow.com/questions/48957195/how-to-fix-docker-got-permission-denied-issue```
 2. The docker container copies the ~/.aws/credentials file into the container when it's run, so make sure you have credentials in that file for an IAM role with appropriate privledges
     * For more information, see [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) 
-4. ```make easy-configure```
+3. ```make easy-configure```
     * Checkout the default values in the .conf file and feel free to change
-5. ```make docker-run```
+4. ```make docker-run```
     * This uses the values from the .env file and .conf file to create the cloudformation stack. This will take 10 mins or so to complete, so be patient.
-6. ```make set-lambda-env```
+5. ```make set-lambda-env```
     * This sets the environment variables for the lambda function (ex. stripe api key and db endpoint)
-7. ```make docker-configure-db```
+6. ```make docker-configure-db```
     * This creates the tables in the new database along with a test client record
 
 
